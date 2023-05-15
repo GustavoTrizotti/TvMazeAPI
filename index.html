@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<!-- 
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+INTEGRANTES:
+GUSTAVO TRIZOTTI (Turma B)
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <title>TVMaze</title>
+
+    <script>
+        $(document).ready(function() {
+
+            $("form").submit(function (e) {
+                e.preventDefault();
+                $(".container-data").empty();
+
+                let urlTVMaze = "https://api.tvmaze.com/search/shows?q=";
+                let input = $("#input").val();
+                let urlSearch = urlTVMaze + input;
+
+                $.ajax({
+                    url: urlSearch,
+                    type: 'GET',
+                    success: function Adicionar(data) {
+                        for (var i = 0; i < data.length; i++) {
+                            let show = data[i].show;
+                            let id = data[i].show.id;
+                            let image = show.image;
+                            let img = $("<img>");
+                            if (image == null) {
+                                img.attr("src", "https://www.defensoria.to.def.br/no_image.jpg")
+                            } else {
+                                img.attr("src", image.original);
+                            }
+                            img.attr("value", id)
+                            img.addClass("image-card")
+
+                            let title = $("<h1>").text(show.name);
+                            title.addClass("title-card");
+
+                            let pText = show.summary;
+                            let p = $("<p>").text($(pText).text());
+                            p.addClass("desc-card");
+
+                            let genres = show.genres;
+                            genres = genres.join(" - ");
+                            let cardGenres = $("<h4>").text(genres);
+                            cardGenres.addClass("gender-card");
+
+                            let card = $("<div>").addClass("card");
+                            let cardImage = $("<div>").addClass("card-image");
+                            let cardContent = $("<div>").addClass("card-content");
+
+                            cardImage.append(img);
+                            cardContent.append(title)
+                            cardContent.append(cardGenres)
+
+                            if (show.summary == null) {
+                                let pNotFound = $("<p>").text("Description not founded!")
+                                pNotFound.addClass("p-not-found");
+                                cardContent.append(pNotFound)
+                            } else {
+                                cardContent.append(p)
+                            }
+
+                            card.append(cardImage)
+                            card.append(cardContent)
+
+                            $(".container-data").append(card)
+                        }
+
+                        $("img").click(function () {
+                            $(".modal").css("display", "block")
+                            let idValue = $(this).attr("value");
+                            for (var k = 0; k < data.length; k++) {
+                                let show = data[k].show;
+                                let id = show.id;
+                                if (id == $(this).attr("value")) {
+                                    let title = show.name
+                                    let modalTitle = $("<h1>").text(title)
+                                    modalTitle.addClass("modal-title");
+                                    $(".modal-content").prepend(modalTitle)
+                                }
+                            }
+                            $.ajax({
+                                url: "https://api.tvmaze.com/shows/" + idValue + "/episodes",
+                                type: 'GET',
+                                success: function Episodios(dataEpisode) {
+                                    $("tbody").empty();
+                                    for (var j = 0; j < dataEpisode.length; j++) {
+                                        let name = dataEpisode[j].name;
+                                        let season = dataEpisode[j].season;
+                                        let episodeNum = dataEpisode[j].number;
+                                        let date = dataEpisode[j].airdate;
+
+                                        let tdName = $("<td>")
+                                        let tdSeason = $("<td>")
+                                        let tdEpisode = $("<td>")
+                                        let tdDate = $("<td>")
+                                        tdName.text(name)
+                                        tdSeason.text(season)
+                                        tdEpisode.text(episodeNum)
+                                        tdDate.text(date)
+
+                                        let tr = $("<tr>")
+                                        tr.append(tdName)
+                                        tr.append(tdSeason)
+                                        tr.append(tdEpisode)
+                                        tr.append(tdDate)
+                                        $("tbody").append(tr)
+                                    }   
+                                    
+                                },
+                                error: function (error) {
+                                    console.log(error)
+                                }
+                            })
+                        })
+
+                    },
+                    error: function(errorMsg) {
+                        console.log(errorMsg)
+                    }
+                })
+
+
+
+            })
+
+            $("#btnReset").click(function Limpar() {
+                $(".container-data").empty();
+            })
+
+            $(".close").click(function () {
+                $(".modal").css("display", "none")
+                $(".modal-title").remove()
+            })
+
+        })
+    </script>
+
+</head>
+<body>
+    
+    <nav class="navbar">
+        <form>
+            <input type="text" placeholder="Digite Aqui" id="input" autocomplete="off">
+            <button type="get" id="btnGet">
+                <i class="bi bi-search"></i>
+            </button>
+            <button type="reset" id="btnReset">
+                <i class="bi bi-trash"></i>
+            </button>
+        </form>
+    </nav>
+
+    <main>
+        <div class="container-data">
+        </div>
+
+        <div class="modal">
+            <div class="modal-content">
+                <span class="close">
+                    <i class="bi bi-x"></i>
+                </span>
+                <table class="table-modal">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Temporada</th>
+                            <th>Episodio</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
